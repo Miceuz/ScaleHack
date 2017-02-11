@@ -2,8 +2,7 @@
 
 import sys
 import tkinter as tk
-from skardas import tkplot
-from skardas.skardas import execute_delayed
+import tkplot
 import threading
 from queue import Queue, Empty
 import serial
@@ -12,6 +11,17 @@ from collections import namedtuple
 import time
 import csv
 import math
+
+def execute_delayed(root, generator):
+    """For each yielded value wait the given amount of time (in seconds)
+    without pausing the Tkinter main loop.
+
+    See 'slowmotion' in http://effbot.org/zone/tkinter-generator-polyline.htm
+    """
+    try:
+        root.after(int(next(generator) * 1000), execute_delayed, root, generator)
+    except StopIteration:
+        pass
 
 
 class Status(namedtuple('Status', ['time', 'local_time', 'power', 'setpoint', 'temp_outside', 'temp_inside'])):
@@ -38,7 +48,13 @@ class Arduino:
         self._setpoint = None
 
     def line_status(self, line):
-        t_ms, pwm, setpoint, temp_outside, temp_inside = line.strip().split(b',')
+        
+        t_ms = 0
+        pwm = 0
+        setpoint = 0
+        temp_outside = 0
+
+        temp_inside = line.strip()
         t = float(t_ms) / 1000.0
         p = float(pwm) / 255.0
         temp_outside = float(temp_outside)
@@ -47,7 +63,7 @@ class Arduino:
 
     def interact(self):
         with open(self.filename, 'wb') as f:
-            self.serial = serial.Serial('/dev/rfcomm0', 115200)
+            self.serial = serial.Serial('/dev/arduino', 9600)
             try:
                 self.started.set()
                 while True:
@@ -205,8 +221,8 @@ class Krosnis:
         _self = self
         def shell():
             self = _self
-            import IPython
-            IPython.embed()
+#            import IPython
+#            IPython.embed()
         threading.Thread(target=shell, daemon=True).start()
         execute_delayed(self.root, self.sample())
 
