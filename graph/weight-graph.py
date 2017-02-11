@@ -24,10 +24,10 @@ def execute_delayed(root, generator):
         pass
 
 
-class Status(namedtuple('Status', ['time', 'local_time', 'power', 'setpoint', 'temp_outside', 'temp_inside'])):
+class Status(namedtuple('Status', ['local_time', 'weight_reading'])):
     @property
     def temp(self):
-        return self.temp_inside - self.temp_outside
+        return self.weight_reading
 
 
 START_TIME = time.time()
@@ -54,12 +54,12 @@ class Arduino:
         setpoint = 0
         temp_outside = 0
 
-        temp_inside = line.strip()
+        weight_reading = line.strip()
         t = float(t_ms) / 1000.0
         p = float(pwm) / 255.0
         temp_outside = float(temp_outside)
-        temp_inside = float(temp_inside)
-        return Status(t, local_time(), p, setpoint, temp_outside, temp_inside)
+        weight_reading = float(weight_reading)
+        return Status(local_time(), weight_reading)
 
     def interact(self):
         with open(self.filename, 'wb') as f:
@@ -69,6 +69,7 @@ class Arduino:
                 while True:
                     try:
                         while True:
+                            None
                             self.serial.write(self.command.get_nowait())
                     except Empty:
                         pass
@@ -82,8 +83,8 @@ class Arduino:
                     f.flush()
                     self.status.put_nowait(status)
                     self.last_status = status
-                    self._power = status.power
-                    self._setpoint = status.setpoint
+                    #self._power = status.power
+                    #self._setpoint = status.setpoint
             finally:
                 self.started.clear()
 
@@ -108,9 +109,8 @@ class Arduino:
     @power.setter
     def power(self, power):
         assert(self.started.is_set())
-        assert(0 <= power <= 1)
-        pwm = int(power * 255)
-        command = struct.pack('cB', b'P', pwm)
+        assert(0 <= power <= 2**24)
+        command = struct.pack('4sc', str.encode(str(int(power))), b'\n')        
         self.command.put(command)
 
     @property
@@ -136,44 +136,29 @@ class HeatPlot(tkplot.TkPlot):
 
         self.plot = self.figure.add_subplot(111)
         self.plot.set_xlabel("Time (s)")
-        self.plot.set_ylabel("Temperature (°C) / heater power (%)")
+        self.plot.set_ylabel("Weight (g)")
         self.plot.set_xlim(0, 1)
         self.plot.set_ylim(0, 110)
-        self.temp_inside_line, = self.plot.plot([], [], label="Inside temperature")
-        self.temp_outside_line, = self.plot.plot([], [], label="Outside temperature")
-        self.power_line, = self.plot.plot([], [], label="Power")
-        self.setpoint_line, = self.plot.plot([], [], label="Setpoint")
-        self.plot.legend(handles=[self.temp_inside_line,
-                                  self.temp_outside_line,
-                                  self.power_line,
-                                  self.setpoint_line], bbox_to_anchor=(0.3, 1))
+        self.weight_reading_line, = self.plot.plot([], [], label="Weight, g")
+        self.plot.legend(handles=[self.weight_reading_line], bbox_to_anchor=(0.3, 1))
         self.figure.tight_layout()
 
     def update(self, status):
         time = [s.local_time for s in status]
-        temp_inside = [s.temp_inside for s in status]
-        temp_outside = [s.temp_outside for s in status]
-        power = [s.power * 100 for s in status]
-        setpoint = [s.setpoint for s in status]
+        weight_reading = [s.weight_reading for s in status]
 
         if time:
             self.plot.set_xlim(min(time), max(time))
-            self.plot.set_ylim(0, max(110, round(max(temp_inside) / 50.0 + 0.5) * 50 + 10))
-            self.temp_inside_line.set_xdata(time)
-            self.temp_inside_line.set_ydata(temp_inside)
-            self.temp_outside_line.set_xdata(time)
-            self.temp_outside_line.set_ydata(temp_outside)
-            self.power_line.set_xdata(time)
-            self.power_line.set_ydata(power)
-            self.setpoint_line.set_xdata(time)
-            self.setpoint_line.set_ydata(setpoint)
+            self.plot.set_ylim(0, max(110, round(max(weight_reading) / 50.0 + 0.5) * 50 + 10))
+            self.weight_reading_line.set_xdata(time)
+            self.weight_reading_line.set_ydata(weight_reading)
             self.figure.canvas.draw()
 
 
 class Krosnis:
     def __init__(self, root, experiment):
         self.root = root
-        self.root.title("krosnis - {}".format(experiment))
+        self.root.title("Scales - {}".format(experiment))
         self.experiment = experiment
 
         self.update_period = 1.0
@@ -192,17 +177,17 @@ class Krosnis:
         self.power.bind('<Return>', self.set_power)
         self.power.pack(side=tk.LEFT)
         self.power.focus_set()
-        self.set_power = tk.Button(self.toolbar, text='Set power', command=self.set_power)
+        self.set_power = tk.Button(self.toolbar, text='Set weight', command=self.set_power)
         self.set_power.pack(side=tk.LEFT)
 
-        self.setpoint_val = tk.StringVar()
-        self.setpoint_val.set('0.0')
-        self.setpoint = tk.Entry(self.toolbar, textvariable=self.setpoint_val)
-        self.setpoint.bind('<Return>', self.set_setpoint)
-        self.setpoint.pack(side=tk.LEFT)
-        self.setpoint.focus_set()
-        self.set_setpoint = tk.Button(self.toolbar, text='Set temperature', command=self.set_setpoint)
-        self.set_setpoint.pack(side=tk.LEFT)
+#        self.setpoint_val = tk.StringVar()
+#        self.setpoint_val.set('0.0')
+#        self.setpoint = tk.Entry(self.toolbar, textvariable=self.setpoint_val)
+#        self.setpoint.bind('<Return>', self.set_setpoint)
+#        self.setpoint.pack(side=tk.LEFT)
+#        self.setpoint.focus_set()
+#        self.set_setpoint = tk.Button(self.toolbar, text='Set temperature', command=self.set_setpoint)
+#        self.set_setpoint.pack(side=tk.LEFT)
 
         self.arduino = Arduino("experiments/{}_raw.csv".format(experiment))
         self.every_status = []
@@ -221,8 +206,6 @@ class Krosnis:
         _self = self
         def shell():
             self = _self
-#            import IPython
-#            IPython.embed()
         threading.Thread(target=shell, daemon=True).start()
         execute_delayed(self.root, self.sample())
 
@@ -238,20 +221,6 @@ class Krosnis:
             return 0
 
     def control(self):
-        #def predict(th_max, rc, th0, th_target):
-        #    t1 = -rc * math.log((th_target - th_max) / (th0 - th_max))
-        #    p_support = th_target / th_max
-        #    return t1, p_support
-
-        #th_max = 204
-        #rc = 600
-
-        #t1, p_support = predict(th_max, rc, self.th0, 100)
-
-        #if local_time() < t1:
-        #    self.arduino.power = 1.0
-        #else:
-        #    self.arduino.power = p_support
         pass
 
     def sample(self):
