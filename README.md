@@ -9,9 +9,17 @@ Electornic scales could be bought online for several bucks, but any scales that 
 
 ![](pics/alldone.jpg)
 
- * [HX711](http://www.ebay.com/itm/HX711-Weighing-Sensor-Dual-Channel-24-Bit-Precision-A-D-Module-Pressure-Sensor-/161264280835) - a 24 bit delta sigma ADC with integrated instrumentation amplifier is a chip specifically designed for digitising grain-gauge bridges.
+ * [HX711](http://www.ebay.com/itm/HX711-Weighing-Sensor-Dual-Channel-24-Bit-Precision-A-D-Module-Pressure-Sensor-/161264280835) - a 24 bit delta-sigma ADC with integrated instrumentation amplifier is a chip specifically designed for digitizing strain-gauge bridges.
  * A goto solution for any quick and dirty hack - an Arduino clone sourced from ebay.
  * HC-05 Bluetooth dongle of the same origin
+
+####Build instructions
+
+Open scales, trace wires of the strain gauges - majority of them will be connected together, leaving just 4 wires which participate in measurement process. Two of wires will be Excitation + and - wires, other pair Signal + and -. To distinguish which is whitch, measure voltage from gound to all those 4 wires. The lowest voltage point will be Excitation-, highest - Excitation+, middle point Signal + and -, it's not exactly clear which is which instatnly, you can always just exchange them is your readings go negative.
+
+Connect Excitation wires to E+ and E- of HX711 board, connect Signal wires to A+ and A- of HX711. Hook up VCC, GND, DT and SCK pins to pins 8, 9, 10, 11 of Arduino as shown in diagram below.
+
+![](pics/schematics.png) 
 
 ####Software
 
