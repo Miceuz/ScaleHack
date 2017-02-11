@@ -45,7 +45,6 @@ class Arduino:
         self.started = threading.Event()
         self.last_status = None
         self._power = None
-        self._setpoint = None
 
     def line_status(self, line):
         
@@ -54,11 +53,7 @@ class Arduino:
         setpoint = 0
         temp_outside = 0
 
-        weight_reading = line.strip()
-        t = float(t_ms) / 1000.0
-        p = float(pwm) / 255.0
-        temp_outside = float(temp_outside)
-        weight_reading = float(weight_reading)
+        weight_reading = float(line.strip())
         return Status(local_time(), weight_reading)
 
     def interact(self):
@@ -83,8 +78,6 @@ class Arduino:
                     f.flush()
                     self.status.put_nowait(status)
                     self.last_status = status
-                    #self._power = status.power
-                    #self._setpoint = status.setpoint
             finally:
                 self.started.clear()
 
@@ -102,29 +95,17 @@ class Arduino:
 
 
     @property
-    def power(self):
+    def calibrationWeight(self):
         assert(self.started.is_set())
         return self._power
 
-    @power.setter
-    def power(self, power):
+    @calibrationWeight.setter
+    def calibrationWeight(self, calibrationWeight):
         assert(self.started.is_set())
-        assert(0 <= power <= 2**24)
-        command = struct.pack('4sc', str.encode(str(int(power))), b'\n')        
+        assert(0 <= calibrationWeight <= 2**24)
+        command = struct.pack('4sc', str.encode(str(int(calibrationWeight))), b'\n')        
         self.command.put(command)
 
-    @property
-    def setpoint(self):
-        assert(self.started.is_set())
-        return self._setpoint
-
-    @setpoint.setter
-    def setpoint(self, setpoint):
-        assert(self.started.is_set())
-        assert(0 <= setpoint <= 255)
-        x = int(setpoint)
-        command = struct.pack('cB', b'S', x)
-        self.command.put(command)
     def start(self):
         self.thread.start()
         self.started.wait()
@@ -172,12 +153,12 @@ class Krosnis:
         self.label.pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
 
         self.power_val = tk.StringVar()
-        self.power_val.set('0.0')
+        self.power_val.set('0')
         self.power = tk.Entry(self.toolbar, textvariable=self.power_val)
-        self.power.bind('<Return>', self.set_power)
+        self.power.bind('<Return>', self.set_calibrationWeight)
         self.power.pack(side=tk.LEFT)
         self.power.focus_set()
-        self.set_power = tk.Button(self.toolbar, text='Set weight', command=self.set_power)
+        self.set_power = tk.Button(self.toolbar, text='Set weight', command=self.set_calibrationWeight)
         self.set_power.pack(side=tk.LEFT)
 
 #        self.setpoint_val = tk.StringVar()
@@ -196,11 +177,11 @@ class Krosnis:
     def set_status(self, status):
         self.label.config(text=status)
 
-    def set_power(self, event=None):
-        self.arduino.power = float(self.power_val.get())
+    def set_calibrationWeight(self, event=None):
+        self.arduino.calibrationWeight = float(self.power_val.get())
 
-    def set_setpoint(self, event=None):
-        self.arduino.setpoint = float(self.setpoint_val.get())
+    # def set_setpoint(self, event=None):
+    #     self.arduino.setpoint = float(self.setpoint_val.get())
 
     def start(self):
         _self = self
