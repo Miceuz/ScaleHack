@@ -19,7 +19,7 @@ def execute_delayed(root, generator):
     See 'slowmotion' in http://effbot.org/zone/tkinter-generator-polyline.htm
     """
     try:
-        root.after(int(next(generator) * 1000), execute_delayed, root, generator)
+        root.after(int(next(generator) * 100), execute_delayed, root, generator)
     except StopIteration:
         pass
 
@@ -122,7 +122,8 @@ class HeatPlot(tkplot.TkPlot):
     def update(self, status):
         time = [s.local_time for s in status]
         weight_reading = [s.weight_reading for s in status]
-
+        time = time[-200:]
+        weight_reading = weight_reading[-200:]
         if time:
             self.plot.set_xlim(min(time), max(time))
             self.plot.set_ylim(0, max(110, round(max(weight_reading) / 50.0 + 0.5) * 50 + 10))
