@@ -115,7 +115,7 @@ class HeatPlot(tkplot.TkPlot):
         self.plot.set_ylabel("Weight (g)")
         self.plot.set_xlim(0, 1)
         self.plot.set_ylim(0, 110)
-        self.weight_reading_line, = self.plot.plot([], [], label="Weight, g")
+        self.weight_reading_line, = self.plot.plot([], [], label="Weight, g", linewidth=4.0)
         self.plot.legend(handles=[self.weight_reading_line], bbox_to_anchor=(0.3, 1))
         self.figure.tight_layout()
 
