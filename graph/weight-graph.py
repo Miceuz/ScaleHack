@@ -37,8 +37,9 @@ def local_time():
 
 
 class Arduino:
-    def __init__(self, filename):
+    def __init__(self, port, filename):
         self.filename = filename
+        self.port = port
         self.status = Queue()
         self.command = Queue()
         self.thread = threading.Thread(target=self.interact, daemon=True)
@@ -52,7 +53,7 @@ class Arduino:
 
     def interact(self):
         with open(self.filename, 'wb') as f:
-            self.serial = serial.Serial('/dev/arduino', 9600)
+            self.serial = serial.Serial(self.port, 9600)
             try:
                 self.started.set()
                 while True:
@@ -131,7 +132,7 @@ class HeatPlot(tkplot.TkPlot):
 
 
 class Krosnis:
-    def __init__(self, root, experiment):
+    def __init__(self, root, port, experiment):
         self.root = root
         self.root.title("Scales - {}".format(experiment))
         self.experiment = experiment
@@ -164,7 +165,7 @@ class Krosnis:
 #        self.set_setpoint = tk.Button(self.toolbar, text='Set temperature', command=self.set_setpoint)
 #        self.set_setpoint.pack(side=tk.LEFT)
 
-        self.arduino = Arduino("experiments/{}_raw.csv".format(experiment))
+        self.arduino = Arduino(port, "experiments/{}_raw.csv".format(experiment))
         self.every_status = []
         self.th0 = 0
 
@@ -219,12 +220,12 @@ class Krosnis:
                     print(e)
 
 
-def run(experiment):
+def run(port, experiment):
     root = tk.Tk()
     root.geometry("1000x700")
-    win = Krosnis(root, experiment)
+    win = Krosnis(root, port, experiment)
     win.start()
     tk.mainloop()
 
 if __name__ == "__main__":
-    run(sys.argv[1])
+    run(sys.argv[1], sys.argv[2])
