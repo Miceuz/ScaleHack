@@ -48,12 +48,6 @@ class Arduino:
         self._power = None
 
     def line_status(self, line):
-        
-        t_ms = 0
-        pwm = 0
-        setpoint = 0
-        temp_outside = 0
-
         weight_reading = float(line.strip())
         return Status(local_time(), weight_reading)
 

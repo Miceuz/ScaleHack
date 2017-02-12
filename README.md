@@ -15,7 +15,10 @@ Electornic scales could be bought online for several bucks, but any scales that 
 
 ####Build instructions
 
-Open scales, trace wires of the strain gauges - majority of them will be connected together, leaving just 4 wires which participate in measurement process. Two of wires will be Excitation + and - wires, other pair Signal + and -. To distinguish which is whitch, measure voltage from gound to all those 4 wires. The lowest voltage point will be Excitation-, highest - Excitation+, middle point Signal + and -, it's not exactly clear which is which instatnly, you can always just exchange them is your readings go negative.
+![](pics/wiring1.png)
+Open the scales and trace/buzz the wires of the strain gauges. Majority of them will be connected together, leaving just 4 wires which participate in measurement process. Of those two will be Excitation + and - wires, the other pair - Signal + and -. To distinguish whitch is whitch, measure voltage from gound to all of those 4 wires. The lowest voltage point will be Excitation-, highest - Excitation+, middle point - Signal + and -, it's not exactly clear which is which instantly, you can always just exchange them if your readings go negative.
+
+![](pics/wiring2.png)
 
 Connect Excitation wires to E+ and E- of HX711 board, connect Signal wires to A+ and A- of HX711. Hook up VCC, GND, DT and SCK pins to pins 8, 9, 10, 11 of Arduino as shown in diagram below.
 
@@ -70,8 +73,10 @@ void loop() {
   }
 }
 ```
-![](pics/logger.png)
+
 Host-side python code allows for data logging and visualisation. Add python modules until it works. 
+
+![](pics/logger.png)
 
 ###Cost analysis
 
