@@ -70,6 +70,8 @@ void loop() {
   }
 }
 ```
+![](pics/logger.png)
+Host-side python code allows for data logging and visualisation. Add python modules until it works. 
 
 ###Cost analysis
 
