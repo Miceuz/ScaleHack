@@ -1,11 +1,11 @@
-#Scale hack
+# Scale hack
 
-##Rationale
+## Rationale
 Electornic scales could be bought online for several bucks, but any scales that could be connected to a computer is a lot more expensive. The idea of this project is to create a compact and cheap solution that could be used to hack any conventional consumer-grade scales to make them connected. 
 
-##Solution
+## Solution
 
-####Hardware
+#### Hardware
 
 ![](pics/alldone.jpg)
 
@@ -13,7 +13,7 @@ Electornic scales could be bought online for several bucks, but any scales that 
  * A goto solution for any quick and dirty hack - an Arduino clone sourced from ebay.
  * HC-05 Bluetooth dongle of the same origin
 
-####Build instructions
+#### Build instructions
 
 ![](pics/wiring1.png)
 Open the scales and trace/buzz the wires of the strain gauges. Majority of them will be connected together, leaving just 4 wires which participate in measurement process. Of those two will be Excitation + and - wires, the other pair - Signal + and -. To distinguish whitch is whitch, measure voltage from gound to all of those 4 wires. The lowest voltage point will be Excitation-, highest - Excitation+, middle point - Signal + and -, it's not exactly clear which is which instantly, you can always just exchange them if your readings go negative.
@@ -24,7 +24,7 @@ Connect Excitation wires to E+ and E- of HX711 board, connect Signal wires to A+
 
 ![](pics/schematics.png) 
 
-####Software
+#### Software
 
  * Arduino library used: https://github.com/bogde/HX711
  * A simple serial protocol implemented - if 0 is sent, the scale is zeroed, if any non-zero number is sent, it is cansidered that equal weight object is placed on the scale and used to calibrate the upper range of the scale.
@@ -78,7 +78,7 @@ Host-side python code allows for data logging and visualisation. Add python modu
 
 ![](pics/logger.png)
 
-###Cost analysis
+### Cost analysis
 
 Component | Cost 
 ----------|---------
